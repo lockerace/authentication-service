@@ -10,6 +10,7 @@ A HTTP server (back end only) with DB support & auth features
 - validator
 - signin / signup
 - token and refresh-tokens
+- optional roles by environment variables
 
 ## Dependencies
 - Node.js
