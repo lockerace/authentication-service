@@ -1,5 +1,5 @@
 const roles = process.env.ROELS ? process.env.ROELS.split(',') : ['user', 'admin'];
-const privilegedRoles = process.env.PRIVILEGED_ROELS ? process.env.PRIVILEGED_ROELS.split(',') : ['admin'];
+const privilegedRoles = process.env.PRIVILEGED_ROLES ? process.env.PRIVILEGED_ROLES.split(',') : ['admin'];
 
 module.exports = {
 	mongoUri: process.env.MONGO_URI || "mongodb://localhost/auth-service",
