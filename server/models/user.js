@@ -63,6 +63,10 @@ UserSchema.pre('save', function saveHook(next) {
 		user.roles = [config.defaultRole];
 	}
 
+	if (!this.salt) {
+		this.salt = bcrypt.genSaltSync();
+	}
+
 	// proceed further only if the password is modified or the user is new
 	if (!user.isModified('password')) return next();
 
