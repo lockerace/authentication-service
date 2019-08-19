@@ -2,10 +2,8 @@
  * this file used to initiate basic data inside the authentication service
  */
 const config = require('../config');
-const User = require('mongoose').model('User');
-
-// connect to the database and load models
 require('../server/models').connect(config.mongoUri);
+const User = require('mongoose').model('User');
 
 const user = new User({
 	email: 'test@test.com',
