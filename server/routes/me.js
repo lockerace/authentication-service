@@ -1,8 +1,8 @@
 function getMe(req, res) {
 	return res.jsonp({
-		email: req.me.email,
-		name: req.me.name,
-		roles: req.me.roles
+		email: req.user.email,
+		name: req.user.name,
+		roles: req.user.roles
 	}).end();
 }
 

@@ -48,7 +48,7 @@ UserSchema.methods.getRefreshToken = function getRefreshToken() {
 	return jwt.sign({
 		sub: this._id,
 		created: this.refreshTokenCreated
-	}, config.refreshTokenSecret + this.salt, {expiresIn: '1d'});
+	}, config.refreshTokenSecret + this.salt, {expiresIn: '14d'});
 };
 
 
