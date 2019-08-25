@@ -12,5 +12,7 @@ const user = new User({
 	roles: [config.privilegedRoles[0]],
 });
 
-user.save()
-	.then(() => console.log('admin created successfully'));
+user.save().then(() => {
+	console.log('admin created successfully');
+	process.exit(0);
+});
