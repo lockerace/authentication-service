@@ -22,8 +22,8 @@ const UserSchema = new mongoose.Schema({
 			return Promise.resolve();
 		}
 	},
-	tokenCreated: Number,
-	refreshTokenCreated: Number,
+	tokenCreated: Date,
+	refreshTokenCreated: Date,
 });
 
 
@@ -39,16 +39,19 @@ UserSchema.methods.comparePassword = function comparePassword(password, callback
 };
 
 UserSchema.methods.getToken = function getToken() {
-	this.tokenCreated = Date.now();
-	return jwt.sign({sub: this._id, created: this.tokenCreated}, config.jwtSecret, {expiresIn: '1h'});
+	this.tokenCreated = new Date();
+	return jwt.sign({
+			sub: this._id,
+			created: this.tokenCreated.toJSON()
+		}, config.jwtSecret, {expiresIn: config.tokenExpiration});
 };
 
 UserSchema.methods.getRefreshToken = function getRefreshToken() {
-	this.refreshTokenCreated = Date.now();
+	this.refreshTokenCreated = new Date();
 	return jwt.sign({
 		sub: this._id,
-		created: this.refreshTokenCreated
-	}, config.refreshTokenSecret + this.salt, {expiresIn: '14d'});
+		created: this.refreshTokenCreated.toJSON()
+	}, config.refreshTokenSecret, {expiresIn: config.refreshTokenExpiration});
 };
 
 
