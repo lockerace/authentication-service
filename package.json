@@ -9,8 +9,8 @@
     "es6"
   ],
   "engines": {
-    "npm": ">=3",
-    "node": ">=6.5"
+    "npm": ">=5",
+    "node": ">=10.5"
   },
   "scripts": {
     "start": "node --use_strict index.js"
