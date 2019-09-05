@@ -31,11 +31,13 @@ module.exports = new PassportLocalStrategy({
 			return user.save().then(() => {
 				return done(
 					null,
-					token,
-					refreshToken,
 					{
-						email: user.email,
-						name: user.name,
+						token,
+						refreshToken,
+						user: {
+							email: user.email,
+							name: user.name,
+						}
 					}
 				);
 			});

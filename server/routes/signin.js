@@ -27,7 +27,7 @@ function signin(req, res, next) {
 		return res.json({errors: validationErrors});
 	}
 
-	return passport.authenticate('local-login', (error, token, refreshToken, user) => {
+	return passport.authenticate('local-login', (error, {token, refreshToken, user}) => {
 		if (error !== null) {
 			return res.json({
 				errors: {
