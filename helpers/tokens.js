@@ -13,12 +13,9 @@ function verifyToken (token) {
 
 function verifyRefreshToken (refreshToken) {
 	return verify(refreshToken, config.refreshTokenSecret).then(({ user, decoded }) => {
-		console.log('got user to refresh', user.refreshTokenCreated, decoded.created)
 		if (user.refreshTokenCreated.toJSON() === decoded.created) {
-			console.log('token verified')
 			return user
 		}
-		console.log('rejected token');
 		return Promise.reject()
 	})
 }

@@ -9,12 +9,10 @@ function refreshToken (req, res) {
 	const token = req.headers.authorization.split(' ')[1]
 
 	return verifyRefreshToken(token).then(user => {
-		console.log('got user after check')
 		const token = user.getToken()
 		const refreshToken = user.getRefreshToken()
 
 		return user.save().then(() => {
-			console.log('updated user, now respond')
 			return res.jsonp({
 				payload: {
 					user: {
