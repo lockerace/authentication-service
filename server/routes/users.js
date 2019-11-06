@@ -2,6 +2,8 @@ const User = require('mongoose').model('User')
 const { isObjectId } = require('../../helpers/mongo-utils')
 
 function getUsers (req, res) {
+  const isPrivileged = !!req.user.isPrivileged
+
   const users = (req.query.users || '')
     .split(',')
     .map(id => id.trim())
@@ -10,8 +12,8 @@ function getUsers (req, res) {
   if (!users.length) {
     return res.status(200).jsonp([]).end()
   }
-  return User.find({ _id: { $in: users } })
-    .select('name')
+  return User.find(isPrivileged && !users.length ? {} : { _id: { $in: users } })
+    .select(isPrivileged ? 'email name roles' : 'name')
     .lean()
     .then(users => {
       return res.status(200).jsonp(users || []).end()
