@@ -1,24 +1,18 @@
-const {verifyToken} = require('../../helpers/tokens');
+function onlyAuthenticated (req, res, next) {
+  if (!req.user) {
+    return res.status(401).jsonp({ message: 'you are not authorized' }).end()
+  }
+  next()
+}
 
+function onlyPrivileged (req, res, next) {
+  if (!req.user || !res.user.isPrivileged) {
+    return res.status(401).jsonp({ message: 'you are not authorized' }).end()
+  }
+  next()
+}
 
-/**
- *  The Auth Checker middleware function.
- */
-module.exports = (req, res, next) => {
-	if (!req.headers.authorization) {
-		return res.status(401).end();
-	}
-
-	// get the last part from a authorization header string like "bearer token-value"
-	const token = req.headers.authorization.split(' ')[1];
-
-	return verifyToken(token)
-		.then(user => {
-			// pass user details onto next route
-			req.user = user;
-			return next();
-		})
-		.catch(() => {
-			return res.status(401).end();
-		});
-};
+module.exports = {
+  onlyAuthenticated,
+  onlyPrivileged
+}
