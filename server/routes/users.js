@@ -22,7 +22,7 @@ function getUsers (req, res) {
 }
 
 function getUser (req, res) {
-  const isPrivileged = !!req.user.isPrivileged
+  const isPrivileged = !!(req.user && req.user.isPrivileged)
 
   return User.findById(req.params.userId)
     .select(isPrivileged ? 'email name roles' : 'name')
@@ -43,8 +43,8 @@ function updateUser (req, res) {
     .then(user => {
       return Object.assign(user, body).save()
     })
-    .then(({ email, name, roles }) => {
-      return res.status(200).jsonp({ email, name, roles }).end()
+    .then(({ email, name, roles, _id }) => {
+      return res.status(200).jsonp({ email, name, roles, _id }).end()
     })
     .catch(() => res.status(400).jsonp({ message: 'user update failed' }).end())
 }

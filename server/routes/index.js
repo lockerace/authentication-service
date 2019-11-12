@@ -10,7 +10,7 @@ function routes (app) {
     .post('/api/token/refresh', require('./refresh-token'))
     .get('/api/me', populateUser, onlyAuthenticated, require('./me'))
     .get('/api/users', populateUser, getUsers)
-    .get('/api/users/:userId', getUser)
+    .get('/api/users/:userId', populateUser, getUser)
     .put('/api/users/:userId', populateUser, onlyPrivileged, updateUser)
 }
 

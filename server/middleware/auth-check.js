@@ -6,7 +6,7 @@ function onlyAuthenticated (req, res, next) {
 }
 
 function onlyPrivileged (req, res, next) {
-  if (!req.user || !res.user.isPrivileged) {
+  if (!(req.user && req.user.isPrivileged)) {
     return res.status(401).jsonp({ message: 'you are not authorized' }).end()
   }
   next()
