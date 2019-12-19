@@ -1,5 +1,6 @@
 const User = require('mongoose').model('User')
 const { isObjectId } = require('../../helpers/mongo-utils')
+const privilegedUserFields = 'email name roles isEmailVerified'
 
 function getUsers (req, res) {
   const isPrivileged = !!(req.user && req.user.isPrivileged)
@@ -13,7 +14,7 @@ function getUsers (req, res) {
     return res.status(200).jsonp([]).end()
   }
   return User.find(isPrivileged && !users.length ? {} : { _id: { $in: users } })
-    .select(isPrivileged ? 'email name roles' : 'name')
+    .select(isPrivileged ? privilegedUserFields : 'name')
     .lean()
     .then(users => {
       return res.status(200).jsonp(users || []).end()
@@ -25,7 +26,7 @@ function getUser (req, res) {
   const isPrivileged = !!(req.user && req.user.isPrivileged)
 
   return User.findById(req.params.userId)
-    .select(isPrivileged ? 'email name roles' : 'name')
+    .select(isPrivileged ? privilegedUserFields : 'name')
     .lean()
     .then(user => {
       if (!user) {
@@ -41,6 +42,10 @@ function updateUser (req, res) {
 
   User.findById(req.params.userId)
     .then(user => {
+      // Invalidate email verification
+      if (body.email && user.email != body.email) {
+        user.isEmailVerified = false;
+      }
       return Object.assign(user, body).save()
     })
     .then(({ email, name, roles, _id }) => {

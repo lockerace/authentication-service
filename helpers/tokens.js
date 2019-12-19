@@ -44,7 +44,21 @@ function verify (token, secret) {
   })
 }
 
+function verifyEmailVerificationToken (token) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, config.jwtSecret, (err, decoded) => {
+      if (err || !decoded) {
+        // the 401 code is for unauthorized status
+        return reject(err || { message: 'token is empty' })
+      }
+
+      resolve({userId: decoded.sub, created: decoded.created})
+    })
+  })
+}
+
 module.exports = {
   verifyToken,
-  verifyRefreshToken
+  verifyRefreshToken,
+  verifyEmailVerificationToken
 }
