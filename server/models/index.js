@@ -1,7 +1,15 @@
 const mongoose = require('mongoose');
 
 module.exports.connect = (uri) => {
-	mongoose.connect(uri, {useMongoClient: true});
+	if (process.env.NODE_ENV === 'test') {
+		mongoose.set('useCreateIndex', true);
+		mongoose.set('useUnifiedTopology', true);
+		mongoose.set('useNewUrlParser', true);
+		mongoose.connect(uri);
+	} else {
+		mongoose.connect(uri, {useMongoClient: true});
+	}
+
 	// plug in the promise library:
 	mongoose.Promise = global.Promise;
 

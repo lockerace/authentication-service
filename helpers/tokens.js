@@ -38,6 +38,10 @@ function verify (token, secret) {
         if (userErr || !user) {
           return reject(userErr || { message: 'user not exists' })
         }
+
+        if (!user.isEmailVerified) {
+          return reject({ message: 'user email verification required' })
+        }
         resolve({ user, decoded })
       })
     })

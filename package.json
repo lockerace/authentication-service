@@ -14,7 +14,8 @@
   },
   "scripts": {
     "start": "node --use_strict index.js",
-    "start:dev": "pm2 start ecosystem.config.js"
+    "restart": "node helpers/reset; npm start",
+    "test": "mocha --exit"
   },
   "author": "David Meir-Levy",
   "license": "MIT",
@@ -30,5 +31,9 @@
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "validator": "^7.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0"
   }
 }

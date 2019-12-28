@@ -11,11 +11,16 @@ module.exports = {
 	roles,
 	privilegedRoles,
 	defaultRole: process.env.DEFAULT_ROLE ? process.env.DEFAULT_ROLE : roles[0],
-	emailVerificationUrl: process.env.EMAIL_VERIFICATION_URL || "http://localhost:" + (process.env.PORT || 3000) + "/verification/email",
+	applicationName: process.env.APPLICATION_NAME || "Local Blog",
+	applicationUrl: process.env.APPLICATION_URL || "http://localhost:" + (process.env.PORT || 3000),
 	mailProvider: {
 		service: process.env.MAIL_PROVIDER_SERVICE,
 		email: process.env.MAIL_PROVIDER_EMAIL,
 		authType: process.env.MAIL_PROVIDER_AUTH_TYPE,
 		password: process.env.MAIL_PROVIDER_PW
+	},
+	spamIntervals: {
+		resendVerificationEmail: process.env.RESEND_VERIFICATION_EMAIL_INTERVAL || 30, // in seconds
+		changeEmail: process.env.CHANGE_EMAIL_INTERVAL || 24 * 60 * 60 // in seconds
 	}
 };
