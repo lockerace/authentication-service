@@ -13,7 +13,8 @@
     "node": ">=10.5"
   },
   "scripts": {
-    "start": "node --use_strict index.js"
+    "start": "node --use_strict index.js",
+    "test": "jest"
   },
   "author": "David Meir-Levy",
   "license": "MIT",
@@ -22,11 +23,14 @@
     "body-parser": "^1.17.2",
     "cors": "^2.8.4",
     "express": "^4.15.3",
-    "jsonwebtoken": "^7.4.3",
+    "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.7.5",
     "morgan": "^1.9.0",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "validator": "^7.0.0"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0"
   }
 }
