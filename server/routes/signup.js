@@ -52,7 +52,7 @@ function signup(req, res, next) {
 			});
 		}
 
-		return sendVerificationEmail(req.mailer, req.user, verificationEmailTypes.WELCOME)
+		return sendVerificationEmail(req.user, verificationEmailTypes.WELCOME)
       .then(payload => res.json(payload))
       .catch(err => res.json(err))
 	})(req, res, next)

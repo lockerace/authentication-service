@@ -77,7 +77,7 @@ function updateUser (req, res) {
     .then(savedUser => {
       // send rollback email first if exists
       if (emailChanged && savedUser.lastVerifiedEmail) {
-        return sendVerificationEmail(req.mailer, savedUser, verificationEmailTypes.ROLLBACK)
+        return sendVerificationEmail(savedUser, verificationEmailTypes.ROLLBACK)
           .then(emailStatus => {
             rollbackEmailStatus = emailStatus
             return savedUser
@@ -91,7 +91,7 @@ function updateUser (req, res) {
     })
     .then(savedUser => {
       if (emailChanged) {
-        return sendVerificationEmail(req.mailer, savedUser, verificationEmailTypes.REVERIFY)
+        return sendVerificationEmail(savedUser, verificationEmailTypes.REVERIFY)
           .then(emailStatus => {
             reverifyEmailStatus = emailStatus
             return savedUser

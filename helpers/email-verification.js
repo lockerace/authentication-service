@@ -1,5 +1,6 @@
 const User = require('mongoose').model('User')
 const config = require('../config')
+const { mailer } = require('./mailer')
 
 const verificationEmailTypes = {
   WELCOME: 1,
@@ -8,8 +9,7 @@ const verificationEmailTypes = {
   ROLLBACK: 4
 }
 
-function checkIsEmailVerified(data, isUserId) {
-  const query = isUserId === true ? {_id: data} : {email: data};
+function checkIsEmailVerified(query) {
   return User.findOne(query).exec()
     .then(user => {
       if (!user) {
@@ -22,24 +22,28 @@ function checkIsEmailVerified(data, isUserId) {
           }
         });
       }
-      return Promise.resolve(user)
+      return user
     })
 }
 
-function getTemplate(mailer, emailType) {
+function getTemplate(emailType) {
   let template, subject
-  if (emailType === verificationEmailTypes.WELCOME) {
-    template = mailer.getTemplate('welcomeVerification')
-    subject = 'Welcome'
-  } else if (emailType === verificationEmailTypes.RESEND) {
-    template = mailer.getTemplate('verification')
-    subject = 'Email Verification'
-  } else if (emailType === verificationEmailTypes.REVERIFY) {
-    template = mailer.getTemplate('reverification')
-    subject = 'Email Changed'
-  } else if (emailType === verificationEmailTypes.ROLLBACK) {
-    template = mailer.getTemplate('rollbackEmail')
-    subject = 'Email Changed'
+  switch(emailType) {
+    case verificationEmailTypes.WELCOME:
+      template = mailer.getTemplate('welcomeVerification')
+      subject = 'Welcome'
+      break
+    case verificationEmailTypes.RESEND:
+      template = mailer.getTemplate('verification')
+      subject = 'Email Verification'
+      break
+    case verificationEmailTypes.REVERIFY:
+      template = mailer.getTemplate('reverification')
+      subject = 'Email Changed'
+      break
+    case verificationEmailTypes.ROLLBACK:
+      template = mailer.getTemplate('rollbackEmail')
+      subject = 'Email Changed'
   }
   if (template) {
     return Promise.resolve({template, subject})
@@ -48,29 +52,9 @@ function getTemplate(mailer, emailType) {
   }
 }
 
-function mockSendMail(user, shouldNotCreateNewToken, emailVerificationToken, to, emailType) {
-  if (shouldNotCreateNewToken) {
-    return Promise.resolve({
-      emailVerificationToken,
-      email: to,
-      id: user._id,
-      type: emailType
-    })
-  } else {
-    return user.save()
-      .then(() => Promise.resolve({
-        emailVerificationToken,
-        email: to,
-        id: user._id,
-        type: emailType
-      }))
-      .catch((err) => Promise.reject({ message: 'user update failed'}))
-  }
-}
-
-function sendMail(mailer, mailOptions) {
+function sendMail(mailOptions) {
   return mailer.send(mailOptions)
-    .then(() => Promise.resolve({}))
+    .then(() => {})
     .catch(err => Promise.reject({
       errors: {
         emailVerification: 'SEND_VERIFICATION_EMAIL_FAILED'
@@ -78,35 +62,46 @@ function sendMail(mailer, mailOptions) {
     }))
 }
 
-function sendVerificationEmail(mailer, user, emailType) {
-  return new Promise((resolve, reject) => {
-    if (!user) {
-      return reject({ message: 'user not exists' })
+function getEmailVerificationToken(user, emailType) {
+  if (!user) {
+    return Promise.reject({ message: 'user not exists' })
+  }
+  if (!emailType) {
+    return Promise.reject({ message: 'unknown verification email type' })
+  }
+  // resend spam prevention
+  if (user.emailVerificationTokenCreated && emailType === verificationEmailTypes.RESEND) {
+    const secondsDiff = (new Date() - user.emailVerificationTokenCreated) / 1000;
+    if (secondsDiff <= config.spamIntervals.resendVerificationEmail) {
+      return Promise.reject({
+        errors: {
+          emailVerification: 'RESEND_VERIFICATION_EMAIL_SPAM',
+          until: new Date(user.emailVerificationTokenCreated.getTime() + config.spamIntervals.resendVerificationEmail * 1000)
+        }
+      });
     }
-    if (!emailType) {
-      return reject({ message: 'unknown verification email type' })
-    }
-    // resend spam prevention
-    if (user.emailVerificationTokenCreated && emailType === verificationEmailTypes.RESEND) {
-      const secondsDiff = (new Date() - user.emailVerificationTokenCreated) / 1000;
-      if (secondsDiff <= config.spamIntervals.resendVerificationEmail) {
-        return reject({
-          errors: {
-            emailVerification: 'RESEND_VERIFICATION_EMAIL_SPAM',
-            until: new Date(user.emailVerificationTokenCreated.getTime() + config.spamIntervals.resendVerificationEmail * 1000)
-          }
-        });
-      }
-    }
-    const shouldNotCreateNewToken = user.lastVerifiedEmail && emailType === verificationEmailTypes.REVERIFY
-    const emailVerificationToken = shouldNotCreateNewToken ? user.getExistingEmailVerificationToken() : user.getEmailVerificationToken()
-    const to = emailType === verificationEmailTypes.ROLLBACK ? user.lastVerifiedEmail : user.email;
+  }
+  const shouldNotCreateNewToken = user.lastVerifiedEmail && emailType === verificationEmailTypes.REVERIFY
+  const emailVerificationToken = shouldNotCreateNewToken ? user.getExistingEmailVerificationToken() : user.getEmailVerificationToken()
+  const to = emailType === verificationEmailTypes.ROLLBACK ? user.lastVerifiedEmail : user.email;
 
-    if (process.env.NODE_ENV !== 'test') {
-      getTemplate(mailer, emailType)
-        .then(templateData => {
+  if (shouldNotCreateNewToken) {
+    return Promise.resolve(emailVerificationToken)
+  } else {
+    return user.save()
+      .then(() => emailVerificationToken)
+      .catch(err => reject({ message: 'user update failed'}))
+  }
+}
+
+function sendVerificationEmail(user, emailType) {
+  return new Promise((resolve, reject) => {
+    getEmailVerificationToken(user, emailType)
+      .then(token => {
+        getTemplate(emailType).then(templateData => {
+          const to = emailType === verificationEmailTypes.ROLLBACK ? user.lastVerifiedEmail : user.email;
           const extraUrl = emailType === verificationEmailTypes.ROLLBACK ? 'rollback/' : '';
-          const emailVerificationUrl = config.applicationUrl + '/verification/email/' + extraUrl + emailVerificationToken
+          const emailVerificationUrl = config.applicationUrl + '/verification/email/' + extraUrl + token
           templateData.template = templateData.template.replace('{{emailVerificationUrl}}', emailVerificationUrl)
           templateData.template = templateData.template.replaceAll('{{applicationName}}', config.applicationName)
           templateData.template = templateData.template.replaceAll('{{name}}', user.name)
@@ -115,21 +110,12 @@ function sendVerificationEmail(mailer, user, emailType) {
             to: to,
             subject: templateData.subject,
             html: templateData.template
-          };
-          if (shouldNotCreateNewToken) {
-            return sendMail(mailer, mailOptions).then(resolve).catch(reject)
-          } else {
-            return user.save()
-              .then(() => sendMail(mailer, mailOptions))
-              .then(resolve)
-              .catch(err => reject({ message: 'user update failed'}))
           }
+
+          sendMail(mailOptions).then(resolve).catch(reject)
         })
-        .catch(reject)
-    } else {
-      mockSendMail(user, shouldNotCreateNewToken, emailVerificationToken, to, emailType).then(resolve).catch(reject)
-    }
+      })
   })
 }
 
-module.exports = { sendVerificationEmail, checkIsEmailVerified, verificationEmailTypes }
+module.exports = { sendVerificationEmail, checkIsEmailVerified, verificationEmailTypes, getEmailVerificationToken }

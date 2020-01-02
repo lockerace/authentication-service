@@ -11,8 +11,8 @@ function resendVerificationEmail (req, res) {
       }
     })
   }
-  return checkIsEmailVerified(req.body.email)
-    .then(user => sendVerificationEmail(req.mailer, user, verificationEmailTypes.RESEND))
+  return checkIsEmailVerified({email: req.body.email})
+    .then(user => sendVerificationEmail(user, verificationEmailTypes.RESEND))
     .then(result => res.json(result))
     .catch(err => {
       if (err.message) {
@@ -28,7 +28,7 @@ function verifyEmail (req, res) {
   }
   return verifyEmailVerificationToken(req.body.token)
     .then(decoded => {
-      return checkIsEmailVerified(decoded.userId, true)
+      return checkIsEmailVerified({_id: decoded.userId})
         .then(user => {
           if (user.emailVerificationTokenCreated.toJSON() === decoded.created) {
             user.isEmailVerified = true
